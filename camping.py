@@ -1,5 +1,10 @@
 import json
 import requests
+import smtplib
+import ssl
+
+
+### Configurations ###
 
 # Park ID
 # Porpoise Bay Provincial Park = 167
@@ -8,6 +13,12 @@ park_id = 167
 # Date
 date = '2020-08-15T00:00:00'
 
+# email related configurations
+sender = 'email_address'
+receiver = 'email_address'
+pwd = 'password'
+
+### End of Configurations ###
 
 payload = {
     "FacilityId":park_id,
@@ -43,7 +54,6 @@ if __name__ == "__main__":
     #   Slices: Slices
     # }
     all_sites = map(lambda x: { 'Name': units[x]['Name'], 'Slices': units[x]['Slices'][date] }, units)
-    total_sites = len(list(all_sites))
 
     # filter out walk-in sites since they are always marked as empty
     non_walkin = filter(lambda x: not x['Slices']['IsWalkin'], all_sites)
@@ -52,7 +62,14 @@ if __name__ == "__main__":
     empty_sites = list(filter(lambda x: x['Slices']['IsFree'], non_walkin))
 
     if len(empty_sites) == 0:
-        print(f'All the sites({total_sites}) are reserved :\'-(\n')
+        print(f'All the sites are reserved :\'-(\n')
     else:
+        msg = ''
         for site in empty_sites:
-            print(site['Name'] + ' is empty!!!!\n')
+            msg += site['Name'] + ' is empty!!!!\n'
+
+        print(msg)
+
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=ssl.create_default_context()) as server:
+            server.login(sender, pwd)
+            server.sendmail(sender, receiver, msg)
